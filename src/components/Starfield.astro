@@ -1,0 +1,171 @@
+---
+// A lightweight, dependency-free 3D starfield background.
+// Only runs in dark mode and respects prefers-reduced-motion.
+---
+
+<canvas
+  id="starfield"
+  class="pointer-events-none fixed inset-0 -z-10 hidden dark:block"
+  aria-hidden="true"
+></canvas>
+
+<script>
+  const canvas = document.getElementById('starfield') as HTMLCanvasElement | null;
+  if (!canvas) throw new Error('Starfield canvas not found');
+
+  const ctx = canvas.getContext('2d', { alpha: true });
+  if (!ctx) throw new Error('Could not get 2D context');
+
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  let running = false;
+  let rafId: number | null = null;
+
+  let width = window.innerWidth;
+  let height = window.innerHeight;
+  let dpr = Math.min(window.devicePixelRatio || 1, 2);
+  let cx = width / 2;
+  let cy = height / 2;
+
+  const FOV = 280;
+  const SPEED = 1.8;
+  const MAX_DEPTH = 1800;
+
+  interface Star {
+    x: number;
+    y: number;
+    z: number;
+    pz: number;
+  }
+
+  const stars: Star[] = [];
+
+  function starCount() {
+    const area = width * height;
+    return Math.min(500, Math.max(180, Math.floor(area / 4500)));
+  }
+
+  function randomX() {
+    return (Math.random() - 0.5) * width * 2.8;
+  }
+
+  function randomY() {
+    return (Math.random() - 0.5) * height * 2.8;
+  }
+
+  function resetStar(star: Star, far = false) {
+    star.x = randomX();
+    star.y = randomY();
+    star.z = far ? MAX_DEPTH : Math.random() * MAX_DEPTH;
+    star.pz = star.z;
+  }
+
+  function initStars() {
+    stars.length = 0;
+    const count = starCount();
+    for (let i = 0; i < count; i++) {
+      stars.push({ x: randomX(), y: randomY(), z: Math.random() * MAX_DEPTH, pz: 0 });
+    }
+  }
+
+  function resize() {
+    width = window.innerWidth;
+    height = window.innerHeight;
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+    canvas.width = Math.floor(width * dpr);
+    canvas.height = Math.floor(height * dpr);
+    canvas.style.width = `${width}px`;
+    canvas.style.height = `${height}px`;
+
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    cx = width / 2;
+    cy = height / 2;
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, width, height);
+
+    for (const star of stars) {
+      star.pz = star.z;
+      star.z -= SPEED;
+
+      if (star.z <= 1) {
+        resetStar(star, true);
+        continue;
+      }
+
+      const invZ = 1 / star.z;
+      const x = star.x * invZ * FOV + cx;
+      const y = star.y * invZ * FOV + cy;
+
+      const pInvZ = 1 / star.pz;
+      const px = star.x * pInvZ * FOV + cx;
+      const py = star.y * pInvZ * FOV + cy;
+
+      const depth = 1 - star.z / MAX_DEPTH;
+      const alpha = 0.25 + depth * 0.65;
+      const radius = 0.5 + depth * 1.6;
+
+      ctx.beginPath();
+      ctx.strokeStyle = `rgba(250, 250, 250, ${alpha})`;
+      ctx.lineWidth = radius;
+      ctx.lineCap = 'round';
+      ctx.moveTo(px, py);
+      ctx.lineTo(x, y);
+      ctx.stroke();
+    }
+  }
+
+  function loop() {
+    draw();
+    rafId = requestAnimationFrame(loop);
+  }
+
+  function shouldRun() {
+    return prefersDark.matches && !prefersReducedMotion.matches;
+  }
+
+  function start() {
+    if (running) return;
+    running = true;
+    resize();
+    initStars();
+    rafId = requestAnimationFrame(loop);
+  }
+
+  function stop() {
+    running = false;
+    if (rafId !== null) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+    ctx.clearRect(0, 0, width, height);
+  }
+
+  function sync() {
+    if (shouldRun()) start();
+    else stop();
+  }
+
+  window.addEventListener('resize', () => {
+    resize();
+    initStars();
+  });
+
+  prefersDark.addEventListener('change', sync);
+  prefersReducedMotion.addEventListener('change', sync);
+
+  // Pause when the tab is hidden to save battery.
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      if (rafId !== null) cancelAnimationFrame(rafId);
+      rafId = null;
+    } else if (running) {
+      rafId = requestAnimationFrame(loop);
+    }
+  });
+
+  sync();
+</script>
