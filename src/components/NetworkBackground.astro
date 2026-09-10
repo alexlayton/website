@@ -1,0 +1,53 @@
+<div class="network-background" data-network-background aria-hidden="true">
+  <canvas></canvas>
+</div>
+
+<script>
+  import { initNetworkBackground } from '../scripts/network-background';
+
+  document.querySelectorAll<HTMLElement>('[data-network-background]').forEach(background => {
+    const dispose = initNetworkBackground(background);
+    const beforeSwap = () => {
+      dispose();
+      document.removeEventListener('astro:before-swap', beforeSwap);
+    };
+    document.addEventListener('astro:before-swap', beforeSwap);
+  });
+</script>
+
+<style>
+  .network-background {
+    --network-ink: 0, 0, 0;
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    /* A quiet fallback when JavaScript or WebGL is unavailable. */
+    background:
+      radial-gradient(ellipse at 80% 25%, rgba(var(--network-ink), 0.018), transparent 65%),
+      radial-gradient(ellipse at 15% 85%, rgba(var(--network-ink), 0.012), transparent 60%);
+  }
+
+  .network-background[data-ready] {
+    background: none;
+  }
+
+  canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    opacity: 0.94;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .network-background {
+      --network-ink: 255, 255, 255;
+    }
+  }
+
+  @media print {
+    .network-background {
+      display: none;
+    }
+  }
+</style>

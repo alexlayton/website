@@ -1,0 +1,32 @@
+---
+// Optional licensed webfonts. Missing files use local fonts, then the CSS stack.
+// Vite supplies hashed URLs when files are added; no missing-file requests.
+const files = import.meta.glob<string>('../assets/fonts/*.woff2', {
+  eager: true,
+  query: '?url',
+  import: 'default',
+});
+
+const faces = [
+  { family: 'Berkeley Mono', file: 'BerkeleyMono-Regular', weight: 400, style: 'normal', local: ['Berkeley Mono Regular', 'BerkeleyMono-Regular', 'Berkeley Mono'] },
+  { family: 'Berkeley Mono', file: 'BerkeleyMono-Bold', weight: 700, style: 'normal', local: ['Berkeley Mono Bold', 'BerkeleyMono-Bold'] },
+  { family: 'Berkeley Mono', file: 'BerkeleyMono-Italic', weight: 400, style: 'italic', local: ['Berkeley Mono Italic', 'BerkeleyMono-Italic'] },
+  { family: 'Berkeley Mono', file: 'BerkeleyMono-BoldItalic', weight: 700, style: 'italic', local: ['Berkeley Mono Bold Italic', 'BerkeleyMono-BoldItalic'] },
+  { family: 'OCR-B', file: 'OCRB-Regular', weight: 400, style: 'normal', local: ['OCR-B', 'OCR B', 'OCRB', 'OCRB-Regular', 'OCR B Std'] },
+];
+
+const css = faces.map(face => {
+  const url = files[`../assets/fonts/${face.file}.woff2`];
+  const sources = face.local.map(name => `local("${name}")`);
+  if (url) sources.unshift(`url("${url}") format("woff2")`);
+  return `@font-face {
+    font-family: "${face.family}";
+    src: ${sources.join(', ')};
+    font-weight: ${face.weight};
+    font-style: ${face.style};
+    font-display: swap;
+  }`;
+}).join('\n');
+---
+
+<style is:inline set:html={css}></style>

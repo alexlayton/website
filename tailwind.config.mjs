@@ -5,7 +5,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        mono: ['"Geist Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'monospace'],
+        mono: ['"Berkeley Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'monospace'],
+        accent: ['"OCR-B"', '"Courier New"', '"Berkeley Mono"', 'monospace'],
       },
     },
   },
