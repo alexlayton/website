@@ -1,0 +1,33 @@
+<canvas id="gravity-field" class="gravity-field" aria-hidden="true"></canvas>
+
+<script>
+  import { createGravityField } from '../scripts/gravity-field';
+
+  const canvas = document.querySelector<HTMLCanvasElement>('#gravity-field');
+  if (canvas) {
+    const dispose = createGravityField(canvas);
+    const beforeSwap = () => {
+      dispose();
+      document.removeEventListener('astro:before-swap', beforeSwap);
+    };
+    document.addEventListener('astro:before-swap', beforeSwap);
+  }
+</script>
+
+<style>
+  .gravity-field {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    display: block;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+  }
+
+  @media print {
+    .gravity-field {
+      display: none;
+    }
+  }
+</style>
