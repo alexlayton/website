@@ -1,51 +1,62 @@
 /**
- * Controls for the decorative gravity field. Values that use pixels are based on
- * CSS pixels, so the effect stays consistent across high-density displays.
+ * Decorative "loss landscape" background: faint topographic contours of a
+ * slowly drifting scalar field (a few Gaussian basins and ridges). The cursor
+ * adds a softened gravity well (a Plummer potential), so the contours bend
+ * and gather around it.
+ *
+ * Field coordinates use "units", where one unit is the shorter viewport side.
+ * Values that use pixels are CSS pixels.
  */
 export const GRAVITY_FIELD_CONFIG = {
-  desktopColumns: 60,
-  desktopRows: 60,
-  mobileColumns: 35,
-  mobileRows: 35,
+  // Landscape.
+  driftSpeed: 1,
+  basinDepth: [0.75, 1.1],
+  basinWidth: [0.15, 0.24],
+  ridgeHeight: [0.35, 0.6],
+  ridgeWidth: [0.12, 0.19],
+
+  // Cursor gravity well.
+  cursorMass: 1.15,
+  cursorSoftening: 0.07,
+  cursorEase: 0.07,
+
+  // Contours.
+  contourCell: 14,
+  mobileContourCell: 18,
   mobileBreakpoint: 700,
-  gravityRadius: 260,
-  pull: 0.24,
-  wellDepth: 18,
-  spring: 0.055,
-  damping: 0.82,
-  dotSize: 1.2,
-  dotOpacity: 0.2,
-  centerOpacity: 0.42,
-  depthSpread: 1,
-  cursorLightRadius: 190,
-  cursorLightOpacity: 0.04,
-  cursorLightDotBoost: 0.4,
-  cursorLightSizeBoost: 0.55,
+  contourStep: 0.15,
+  contourFloor: -2,
+  contourOpacity: 0.05,
+  indexContourEvery: 4,
+  indexContourOpacity: 0.09,
+
+  // Readability: soften the contours behind the content column.
+  centerFade: 0.55,
+  centerRadius: 0.34,
+
   maxPixelRatio: 1.5,
 } as const;
 
-type Dot = {
-  originX: number;
-  originY: number;
-  originDepth: number;
-  x: number;
-  y: number;
-  depth: number;
-  velocityX: number;
-  velocityY: number;
-  velocityDepth: number;
-};
+const C = GRAVITY_FIELD_CONFIG;
+const TICK = 1 / 60;
 
-type Pointer = {
+type Source = {
+  fx: number;
+  fy: number;
+  ax: number;
+  ay: number;
+  wx: number;
+  wy: number;
+  px: number;
+  py: number;
+  amplitude: number;
+  k: number;
   x: number;
   y: number;
-  active: boolean;
 };
 
 const LIGHT_INK = '#26332c';
 const DARK_INK = '#d8e3dc';
-const LIGHT_INK_RGB = '38, 51, 44';
-const DARK_INK_RGB = '216, 227, 220';
 
 function seededRandom(seed: number) {
   let value = seed >>> 0;
@@ -58,49 +69,45 @@ function seededRandom(seed: number) {
   };
 }
 
-function clamp(value: number, minimum: number, maximum: number) {
-  return Math.max(minimum, Math.min(maximum, value));
+function between(random: () => number, [low, high]: readonly [number, number]) {
+  return low + (high - low) * random();
 }
 
-function createDots(width: number, height: number): Dot[] {
-  const random = seededRandom(0x5e7a11);
-  const mobile = width < GRAVITY_FIELD_CONFIG.mobileBreakpoint;
-  const columns = mobile ? GRAVITY_FIELD_CONFIG.mobileColumns : GRAVITY_FIELD_CONFIG.desktopColumns;
-  const rows = mobile ? GRAVITY_FIELD_CONFIG.mobileRows : GRAVITY_FIELD_CONFIG.desktopRows;
-  const dots: Dot[] = [];
-  const spacingX = width / Math.max(1, columns - 1);
-  const spacingY = height / Math.max(1, rows - 1);
+/** Basins sit near the corners and ridges between them, which makes saddles. */
+function createSources(): Source[] {
+  const random = seededRandom(0x10557);
+  const basins: Array<[number, number]> = [[0.13, 0.24], [0.87, 0.3], [0.18, 0.8], [0.83, 0.78]];
+  const ridges: Array<[number, number]> = [[0.5, 0.16], [0.5, 0.88], [0.52, 0.5]];
+  const make = (fx: number, fy: number, amplitude: number, sigma: number): Source => ({
+    fx: fx + (random() - 0.5) * 0.1,
+    fy: fy + (random() - 0.5) * 0.1,
+    ax: 0.04 + random() * 0.05,
+    ay: 0.04 + random() * 0.05,
+    wx: (0.03 + random() * 0.04) * C.driftSpeed,
+    wy: (0.03 + random() * 0.04) * C.driftSpeed,
+    px: random() * Math.PI * 2,
+    py: random() * Math.PI * 2,
+    amplitude,
+    k: 1 / (2 * sigma * sigma),
+    x: 0,
+    y: 0,
+  });
 
-  for (let row = 0; row < rows; row += 1) {
-    for (let column = 0; column < columns; column += 1) {
-      const edgeX = column === 0 || column === columns - 1;
-      const edgeY = row === 0 || row === rows - 1;
-      const jitterX = edgeX ? 0 : (random() - 0.5) * spacingX * 0.16;
-      const jitterY = edgeY ? 0 : (random() - 0.5) * spacingY * 0.16;
-      const x = column * spacingX + jitterX;
-      const y = row * spacingY + jitterY;
-      const depth = (random() * 2 - 1) * GRAVITY_FIELD_CONFIG.depthSpread;
-
-      dots.push({
-        originX: x,
-        originY: y,
-        originDepth: depth,
-        x,
-        y,
-        depth,
-        velocityX: 0,
-        velocityY: 0,
-        velocityDepth: 0,
-      });
-    }
-  }
-
-  return dots;
+  return [
+    ...basins.map(([x, y]) => make(x, y, -between(random, C.basinDepth), between(random, C.basinWidth))),
+    // The central ridge is low and wide so the content column stays calm.
+    ...ridges.map(([x, y], index) => make(
+      x,
+      y,
+      between(random, C.ridgeHeight) * (index === 2 ? 0.55 : 1),
+      between(random, C.ridgeWidth) * (index === 2 ? 1.5 : 1),
+    )),
+  ];
 }
 
 /**
- * Creates an elastic, cursor-driven field of dots. The returned function removes
- * every listener and cancels rendering when the component leaves the page.
+ * Creates the animated background. The returned function removes every
+ * listener and cancels rendering when the component leaves the page.
  */
 export function createGravityField(canvas: HTMLCanvasElement): () => void {
   const context = canvas.getContext('2d', { alpha: true });
@@ -110,121 +117,169 @@ export function createGravityField(canvas: HTMLCanvasElement): () => void {
   const dark = matchMedia('(prefers-color-scheme: dark)');
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
   const printMedia = matchMedia('print');
-  const pointer: Pointer = { x: 0, y: 0, active: false };
-  let dots: Dot[] = [];
+  const sources = createSources();
+  const pointer = { x: 0, y: 0, active: false, strength: 0 };
+  let grid = new Float32Array(0);
+  let gridColumns = 0;
+  let gridRows = 0;
+  let gridCell: number = C.contourCell;
   let width = 1;
   let height = 1;
+  let unit = 1;
   let pixelRatio = 1;
   let ink = dark.matches ? DARK_INK : LIGHT_INK;
-  let inkRgb = dark.matches ? DARK_INK_RGB : LIGHT_INK_RGB;
+  let time = Math.random() * 600;
+  let accumulator = 0;
   let frame: number | null = null;
   let resizeFrame: number | null = null;
   let lastTime = 0;
   let pageHidden = document.hidden;
   let disposed = false;
 
+  function valueAt(x: number, y: number) {
+    let value = 0;
+    for (const source of sources) {
+      const dx = x - source.x;
+      const dy = y - source.y;
+      value += source.amplitude * Math.exp(-(dx * dx + dy * dy) * source.k);
+    }
+    if (pointer.strength > 0.001) {
+      const dx = x - pointer.x / unit;
+      const dy = y - pointer.y / unit;
+      value -= C.cursorMass * C.cursorSoftening * pointer.strength
+        / Math.sqrt(dx * dx + dy * dy + C.cursorSoftening * C.cursorSoftening);
+    }
+    return value;
+  }
+
+  function moveSources() {
+    const unitWidth = width / unit;
+    const unitHeight = height / unit;
+    for (const source of sources) {
+      source.x = (source.fx + source.ax * Math.sin(time * source.wx + source.px)) * unitWidth;
+      source.y = (source.fy + source.ay * Math.sin(time * source.wy + source.py)) * unitHeight;
+    }
+  }
+
   function resize() {
     width = Math.max(1, window.innerWidth);
     height = Math.max(1, window.innerHeight);
-    pixelRatio = Math.min(window.devicePixelRatio || 1, GRAVITY_FIELD_CONFIG.maxPixelRatio);
+    unit = Math.min(width, height);
+    pixelRatio = Math.min(window.devicePixelRatio || 1, C.maxPixelRatio);
     canvas.width = Math.floor(width * pixelRatio);
     canvas.height = Math.floor(height * pixelRatio);
     canvas.style.width = `${width}px`;
     canvas.style.height = `${height}px`;
     ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
-    dots = createDots(width, height);
+    gridCell = width < C.mobileBreakpoint ? C.mobileContourCell : C.contourCell;
+    gridColumns = Math.ceil(width / gridCell) + 1;
+    gridRows = Math.ceil(height / gridCell) + 1;
+    grid = new Float32Array(gridColumns * gridRows);
+    moveSources();
   }
 
-  function update(delta: number) {
-    const step = Math.min(delta * 60, 2);
-    const damping = Math.pow(GRAVITY_FIELD_CONFIG.damping, step);
-    const radiusSquared = GRAVITY_FIELD_CONFIG.gravityRadius ** 2;
-
-    dots.forEach(dot => {
-      const distanceX = pointer.x - dot.originX;
-      const distanceY = pointer.y - dot.originY;
-      const distanceSquared = distanceX * distanceX + distanceY * distanceY;
-      const gravity = pointer.active
-        ? Math.exp(-distanceSquared / radiusSquared)
-        : 0;
-      const targetX = dot.originX + distanceX * gravity * GRAVITY_FIELD_CONFIG.pull;
-      const targetY = dot.originY
-        + distanceY * gravity * GRAVITY_FIELD_CONFIG.pull
-        + gravity * GRAVITY_FIELD_CONFIG.wellDepth;
-      const targetDepth = dot.originDepth - gravity * 0.7;
-
-      dot.velocityX += (targetX - dot.x) * GRAVITY_FIELD_CONFIG.spring * step;
-      dot.velocityY += (targetY - dot.y) * GRAVITY_FIELD_CONFIG.spring * step;
-      dot.velocityDepth += (targetDepth - dot.depth) * GRAVITY_FIELD_CONFIG.spring * step;
-      dot.velocityX *= damping;
-      dot.velocityY *= damping;
-      dot.velocityDepth *= damping;
-      dot.x += dot.velocityX * step;
-      dot.y += dot.velocityY * step;
-      dot.depth += dot.velocityDepth * step;
-    });
+  function tick() {
+    time += TICK;
+    moveSources();
+    pointer.strength += ((pointer.active ? 1 : 0) - pointer.strength) * C.cursorEase;
   }
 
-  function drawCursorLight() {
-    if (!pointer.active || reducedMotion.matches) return;
-    const gradient = ctx.createRadialGradient(
-      pointer.x,
-      pointer.y,
-      0,
-      pointer.x,
-      pointer.y,
-      GRAVITY_FIELD_CONFIG.cursorLightRadius,
-    );
-    gradient.addColorStop(0, `rgba(${inkRgb}, ${GRAVITY_FIELD_CONFIG.cursorLightOpacity})`);
-    gradient.addColorStop(0.32, `rgba(${inkRgb}, ${GRAVITY_FIELD_CONFIG.cursorLightOpacity * 0.35})`);
-    gradient.addColorStop(1, `rgba(${inkRgb}, 0)`);
+  /** Marching squares over a coarse grid, one path per contour weight. */
+  function drawContours() {
+    for (let row = 0; row < gridRows; row += 1) {
+      for (let column = 0; column < gridColumns; column += 1) {
+        grid[row * gridColumns + column] = Math.max(
+          valueAt((column * gridCell) / unit, (row * gridCell) / unit),
+          C.contourFloor,
+        );
+      }
+    }
+
+    const minor = new Path2D();
+    const major = new Path2D();
+    const step = C.contourStep;
+    const base = C.contourFloor;
+
+    for (let row = 0; row < gridRows - 1; row += 1) {
+      for (let column = 0; column < gridColumns - 1; column += 1) {
+        const index = row * gridColumns + column;
+        const topLeft = grid[index];
+        const topRight = grid[index + 1];
+        const bottomLeft = grid[index + gridColumns];
+        const bottomRight = grid[index + gridColumns + 1];
+        const low = Math.min(topLeft, topRight, bottomLeft, bottomRight);
+        const high = Math.max(topLeft, topRight, bottomLeft, bottomRight);
+        const first = Math.max(Math.ceil((low - base) / step), 1);
+        const last = Math.floor((high - base) / step);
+        if (first > last) continue;
+
+        const x = column * gridCell;
+        const y = row * gridCell;
+        const xRight = x + gridCell;
+        const yBottom = y + gridCell;
+        for (let levelIndex = first; levelIndex <= last; levelIndex += 1) {
+          const level = base + levelIndex * step;
+          const path = levelIndex % C.indexContourEvery === 0 ? major : minor;
+          const state = (topLeft > level ? 8 : 0) | (topRight > level ? 4 : 0)
+            | (bottomRight > level ? 2 : 0) | (bottomLeft > level ? 1 : 0);
+          if (state === 0 || state === 15) continue;
+
+          const top = x + gridCell * ((level - topLeft) / (topRight - topLeft));
+          const bottom = x + gridCell * ((level - bottomLeft) / (bottomRight - bottomLeft));
+          const left = y + gridCell * ((level - topLeft) / (bottomLeft - topLeft));
+          const right = y + gridCell * ((level - topRight) / (bottomRight - topRight));
+          const segment = (ax: number, ay: number, bx: number, by: number) => {
+            path.moveTo(ax, ay);
+            path.lineTo(bx, by);
+          };
+
+          switch (state) {
+            case 1: case 14: segment(x, left, bottom, yBottom); break;
+            case 2: case 13: segment(bottom, yBottom, xRight, right); break;
+            case 3: case 12: segment(x, left, xRight, right); break;
+            case 4: case 11: segment(top, y, xRight, right); break;
+            case 6: case 9: segment(top, y, bottom, yBottom); break;
+            case 7: case 8: segment(x, left, top, y); break;
+            case 5:
+              segment(x, left, top, y);
+              segment(bottom, yBottom, xRight, right);
+              break;
+            case 10:
+              segment(top, y, xRight, right);
+              segment(x, left, bottom, yBottom);
+              break;
+          }
+        }
+      }
+    }
+
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = ink;
+    ctx.globalAlpha = C.contourOpacity;
+    ctx.stroke(minor);
+    ctx.globalAlpha = C.indexContourOpacity;
+    ctx.stroke(major);
+  }
+
+  /** Erases part of the contours behind the content so text stays clear. */
+  function fadeCenter() {
+    const radius = Math.hypot(width, height) * C.centerRadius;
+    const gradient = ctx.createRadialGradient(width * 0.5, height * 0.5, 0, width * 0.5, height * 0.5, radius);
+    gradient.addColorStop(0, `rgba(0, 0, 0, ${C.centerFade})`);
+    gradient.addColorStop(0.55, `rgba(0, 0, 0, ${C.centerFade * 0.6})`);
+    gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
     ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = 'destination-out';
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, width, height);
+    ctx.globalCompositeOperation = 'source-over';
   }
 
   function draw() {
+    ctx.globalAlpha = 1;
     ctx.clearRect(0, 0, width, height);
-    drawCursorLight();
-    ctx.fillStyle = ink;
-
-    const centerX = width * 0.5;
-    const centerY = height * 0.5;
-    const centerRadius = Math.hypot(width, height) * 0.3;
-
-    dots.forEach(dot => {
-      const depth = (dot.depth + GRAVITY_FIELD_CONFIG.depthSpread)
-        / (GRAVITY_FIELD_CONFIG.depthSpread * 2);
-      const distanceFromCenter = Math.hypot(dot.x - centerX, dot.y - centerY);
-      const peripheralVisibility = clamp(
-        distanceFromCenter / centerRadius,
-        GRAVITY_FIELD_CONFIG.centerOpacity,
-        1,
-      );
-      const lightDistanceX = dot.x - pointer.x;
-      const lightDistanceY = dot.y - pointer.y;
-      const lightDistanceSquared = lightDistanceX * lightDistanceX + lightDistanceY * lightDistanceY;
-      const lightInfluence = pointer.active
-        ? Math.exp(-lightDistanceSquared / (GRAVITY_FIELD_CONFIG.cursorLightRadius ** 2))
-        : 0;
-      // The resting field is uniform. Only the local cursor influence can
-      // enlarge a dot, which keeps the surrounding grid visually consistent.
-      const radius = GRAVITY_FIELD_CONFIG.dotSize
-        * (1 + lightInfluence * GRAVITY_FIELD_CONFIG.cursorLightSizeBoost);
-      const alpha = GRAVITY_FIELD_CONFIG.dotOpacity
-        * (0.58 + depth * 0.42)
-        * peripheralVisibility
-        * (1 + lightInfluence * GRAVITY_FIELD_CONFIG.cursorLightDotBoost);
-
-      ctx.globalAlpha = alpha;
-      if (radius < 1.2) {
-        ctx.fillRect(dot.x - radius * 0.5, dot.y - radius * 0.5, radius, radius);
-      } else {
-        ctx.beginPath();
-        ctx.arc(dot.x, dot.y, radius, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    });
+    drawContours();
+    fadeCenter();
     ctx.globalAlpha = 1;
   }
 
@@ -235,16 +290,23 @@ export function createGravityField(canvas: HTMLCanvasElement): () => void {
 
   function render(now: number) {
     if (disposed || pageHidden || printMedia.matches || reducedMotion.matches) return;
-    const delta = lastTime ? Math.min((now - lastTime) / 1000, 0.1) : 0;
+    accumulator += Math.min((now - lastTime) / 1000, 0.1);
     lastTime = now;
-    update(delta);
-    draw();
+    let ticks = 0;
+    while (accumulator >= TICK && ticks < 3) {
+      tick();
+      accumulator -= TICK;
+      ticks += 1;
+    }
+    if (ticks === 3) accumulator = 0;
+    if (ticks > 0) draw();
     frame = requestAnimationFrame(render);
   }
 
   function start() {
     if (disposed || pageHidden || printMedia.matches || reducedMotion.matches || frame !== null) return;
     lastTime = performance.now();
+    accumulator = 0;
     frame = requestAnimationFrame(render);
   }
 
@@ -252,6 +314,10 @@ export function createGravityField(canvas: HTMLCanvasElement): () => void {
     stop();
     if (disposed || pageHidden || printMedia.matches) return;
     resize();
+    if (reducedMotion.matches) {
+      pointer.active = false;
+      pointer.strength = 0;
+    }
     draw();
     start();
   }
@@ -263,14 +329,14 @@ export function createGravityField(canvas: HTMLCanvasElement): () => void {
     pointer.active = true;
   }
 
-  function onPointerLeave() {
-    pointer.active = false;
+  function onPointerOut(event: PointerEvent) {
+    if (!event.relatedTarget) pointer.active = false;
   }
 
   function onVisibilityChange() {
     pageHidden = document.hidden;
     if (pageHidden) stop();
-    else sync();
+    else start();
   }
 
   function onPageHide(event: PageTransitionEvent) {
@@ -294,7 +360,6 @@ export function createGravityField(canvas: HTMLCanvasElement): () => void {
 
   function onThemeChange() {
     ink = dark.matches ? DARK_INK : LIGHT_INK;
-    inkRgb = dark.matches ? DARK_INK_RGB : LIGHT_INK_RGB;
     if (!pageHidden && !printMedia.matches) draw();
   }
 
@@ -311,7 +376,7 @@ export function createGravityField(canvas: HTMLCanvasElement): () => void {
     resizeFrame = null;
     window.removeEventListener('resize', onResize);
     window.removeEventListener('pointermove', onPointerMove);
-    window.removeEventListener('pointerleave', onPointerLeave);
+    window.removeEventListener('pointerout', onPointerOut);
     document.removeEventListener('visibilitychange', onVisibilityChange);
     window.removeEventListener('pagehide', onPageHide);
     window.removeEventListener('pageshow', onPageShow);
@@ -323,7 +388,7 @@ export function createGravityField(canvas: HTMLCanvasElement): () => void {
 
   window.addEventListener('resize', onResize, { passive: true });
   window.addEventListener('pointermove', onPointerMove, { passive: true });
-  window.addEventListener('pointerleave', onPointerLeave, { passive: true });
+  window.addEventListener('pointerout', onPointerOut, { passive: true });
   document.addEventListener('visibilitychange', onVisibilityChange);
   window.addEventListener('pagehide', onPageHide);
   window.addEventListener('pageshow', onPageShow);

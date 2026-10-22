@@ -7,11 +7,14 @@ import GravityBackground from '../components/GravityBackground.astro';
 interface Props {
   title?: string;
   description?: string;
+  /** Show the animated background. Turn it off on pages made for reading. */
+  background?: boolean;
 }
 
 const {
   title = 'Alex Layton',
   description = 'Personal website of Alex Layton, software engineer.',
+  background = true,
 } = Astro.props;
 ---
 
@@ -26,7 +29,7 @@ const {
     <title>{title}</title>
   </head>
   <body class="relative isolate min-h-screen bg-white text-black dark:bg-neutral-900 dark:text-neutral-100 font-mono antialiased">
-    <GravityBackground />
+    {background && <GravityBackground />}
     <div class="relative z-[1] mx-auto max-w-2xl px-6 py-12 md:py-20">
       <Nav />
       <slot />
