@@ -7,9 +7,24 @@ import Base from '../layouts/Base.astro';
     <header class="border-b border-black dark:border-neutral-100 pb-4">
       <h1 class="text-2xl font-bold tracking-[0.08em]">ALEX LAYTON</h1>
       <p class="mt-2 text-sm">
+        Software engineer · Connected products, systems architecture and technical leadership
+      </p>
+      <p class="mt-1 text-sm">
         hi@alexlayton.co · github.com/alexlayton · linkedin.com/in/alexlayton
       </p>
     </header>
+
+    <section class="mt-8">
+      <h2 class="font-accent text-sm font-normal uppercase tracking-widest border-b border-black dark:border-neutral-100 pb-1 mb-4">
+        Profile
+      </h2>
+      <p class="text-sm leading-relaxed">
+        Software engineer with over twelve years of experience across mobile, cloud and
+        embedded systems. I take new connected product features from proof of concept
+        through architecture and reusable components to adoption by delivery teams.
+        I combine hands-on engineering with cross-team technical leadership and mentoring.
+      </p>
+    </section>
 
     <section class="mt-8">
       <h2 class="font-accent text-sm font-normal uppercase tracking-widest border-b border-black dark:border-neutral-100 pb-1 mb-4">
@@ -18,28 +33,48 @@ import Base from '../layouts/Base.astro';
 
       <article class="mb-6">
         <div class="flex flex-col sm:flex-row sm:justify-between sm:items-baseline">
-          <h3 class="font-bold">Senior Software Engineer</h3>
-          <span class="text-sm">2022 — Present</span>
+          <h3 class="font-bold">Dyson</h3>
+          <span class="text-sm">2017 — Present</span>
         </div>
-        <p class="text-sm italic">Acme Technologies, San Francisco, CA</p>
+        <p class="text-sm italic">
+          Associate Principal Software Engineer · previously Lead, Senior and Software Engineer
+        </p>
+        <p class="mt-2 text-sm leading-relaxed">
+          Software engineering and technical leadership in a cross-disciplinary innovation
+          team, bringing mobile, embedded and cloud engineering together to explore new
+          connected product features and help delivery teams ship them.
+        </p>
         <ul class="mt-2 list-disc list-inside text-sm leading-relaxed space-y-1">
-          <li>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</li>
-          <li>Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</li>
-          <li>Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.</li>
+          <li>Defined the architecture for smart-home device setup, now used in production products, and delivered reusable mobile libraries for app teams.</li>
+          <li>Co-developed a reusable 3D product-visualisation framework that ships in the customer app, and built map interaction concepts with robotics teams.</li>
+          <li>Led a small app team on an air-quality monitoring project, with reliable background data sync between sensors, app and cloud.</li>
+          <li>Built an internal app distribution platform and moved the team’s build and release automation to a managed CI/CD service.</li>
+          <li>Built shared Swift libraries that let engineers prototype on production protocols and services, and mentored undergraduate engineers.</li>
         </ul>
       </article>
 
       <article class="mb-6">
         <div class="flex flex-col sm:flex-row sm:justify-between sm:items-baseline">
-          <h3 class="font-bold">Software Engineer</h3>
-          <span class="text-sm">2019 — 2022</span>
+          <h3 class="font-bold">Mobile Developer</h3>
+          <span class="text-sm">2014 — 2016</span>
         </div>
-        <p class="text-sm italic">Globex Corporation, Remote</p>
-        <ul class="mt-2 list-disc list-inside text-sm leading-relaxed space-y-1">
-          <li>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore.</li>
-          <li>Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia.</li>
-          <li>Deserunt mollit anim id est laborum sed ut perspiciatis unde omnis iste natus.</li>
-        </ul>
+        <p class="text-sm italic">Ventutec</p>
+        <p class="mt-2 text-sm leading-relaxed">
+          Developed commercial iOS and Android apps for clients, and prototyped a
+          Bluetooth-based IoT app and cloud platform.
+        </p>
+      </article>
+
+      <article class="mb-6">
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-baseline">
+          <h3 class="font-bold">Graduate Analyst Programmer</h3>
+          <span class="text-sm">2013 — 2014</span>
+        </div>
+        <p class="text-sm italic">Graffica</p>
+        <p class="mt-2 text-sm leading-relaxed">
+          Developed airspace-planning software used across Europe and automated the
+          software release process.
+        </p>
       </article>
     </section>
 
@@ -49,10 +84,10 @@ import Base from '../layouts/Base.astro';
       </h2>
       <article>
         <div class="flex flex-col sm:flex-row sm:justify-between sm:items-baseline">
-          <h3 class="font-bold">B.S. Computer Science</h3>
-          <span class="text-sm">2015 — 2019</span>
+          <h3 class="font-bold">BSc Computer Science, First Class Honours</h3>
+          <span class="text-sm">2010 — 2013</span>
         </div>
-        <p class="text-sm">University of Example, City, State</p>
+        <p class="text-sm">University of Birmingham</p>
       </article>
     </section>
 
@@ -61,11 +96,13 @@ import Base from '../layouts/Base.astro';
         Skills
       </h2>
       <p class="text-sm leading-relaxed">
-        <span class="font-bold">Languages:</span> Lorem, Ipsum, Dolor, Sit Amet
+        <span class="font-bold">Focus:</span> Systems architecture, Technical leadership, Prototyping, Mentoring
         <br />
-        <span class="font-bold">Frameworks:</span> Consectetur, Adipiscing, Elit, Sed Do
+        <span class="font-bold">Languages:</span> Swift, Python, Rust, TypeScript, Go, Kotlin, C++
         <br />
-        <span class="font-bold">Tools:</span> Eiusmod, Tempor, Incididunt, Ut Labore
+        <span class="font-bold">Connected systems:</span> Bluetooth LE, Matter, HomeKit, MQTT, AWS IoT
+        <br />
+        <span class="font-bold">Platforms:</span> AWS, Docker, CI/CD, GitOps, SwiftUI, React
       </p>
     </section>
 
@@ -73,18 +110,19 @@ import Base from '../layouts/Base.astro';
       <h2 class="font-accent text-sm font-normal uppercase tracking-widest border-b border-black dark:border-neutral-100 pb-1 mb-4">
         Projects
       </h2>
-      <article class="mb-4">
-        <h3 class="font-bold">Personal Tooling</h3>
-        <p class="text-sm leading-relaxed">
-          Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi
-          ut aliquip ex ea commodo consequat duis aute irure dolor.
-        </p>
-      </article>
       <article>
-        <h3 class="font-bold">Open Source Contributions</h3>
+        <h3 class="font-bold">
+          <a
+            href="https://github.com/alexlayton/harness"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="hover:underline underline-offset-4"
+          >Harness</a>
+        </h3>
         <p class="text-sm leading-relaxed">
-          Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore
-          eu fugiat nulla pariatur excepteur sint occaecat cupidatat non proident.
+          An open-source coding agent written in Rust. It works with several LLM
+          providers, runs tools and subagents, and runs in the terminal, in headless
+          mode or from an editor.
         </p>
       </article>
     </section>
