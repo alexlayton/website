@@ -1,0 +1,26 @@
+<canvas id="particle-field" class="particle-field" aria-hidden="true"></canvas>
+
+<script>
+  import { createParticleField } from '../scripts/particle-field';
+
+  const canvas = document.querySelector<HTMLCanvasElement>('#particle-field');
+  if (canvas) createParticleField(canvas);
+</script>
+
+<style>
+  .particle-field {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    display: block;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+  }
+
+  @media print {
+    .particle-field {
+      display: none;
+    }
+  }
+</style>

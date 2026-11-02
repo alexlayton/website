@@ -4,14 +4,13 @@ Source for my personal website: a short homepage and a resume page.
 
 It is a static site built with [Astro](https://astro.build) and
 [Tailwind CSS](https://tailwindcss.com). The homepage has a subtle animated
-background: faint topographic contours of a slowly drifting field that bend
-toward the cursor.
+background: a lattice of dots that the cursor pushes away.
 
 ## Tech stack
 
 - **Astro 5**: static output, no client framework
 - **Tailwind CSS 3**: styles, through `@astrojs/tailwind`
-- **TypeScript**: the contour background (`src/scripts/gravity-field.ts`)
+- **TypeScript**: the WebGL particle background (`src/scripts/particle-field.ts`)
 - **Cloudflare Pages**: hosting
 
 ## Project structure
@@ -21,7 +20,7 @@ src/
 ├── components/     Nav, social links, fonts, background
 ├── layouts/        Base page layout
 ├── pages/          index.astro (homepage), resume.astro
-├── scripts/        Contour background animation
+├── scripts/        Particle background (WebGL)
 └── styles/         Global CSS
 ```
 
