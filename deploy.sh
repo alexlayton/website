@@ -15,6 +15,6 @@ if [ -z "$PROJECT_NAME" ]; then
   exit 1
 fi
 
-npm ci
-npm run build
-npx wrangler pages deploy dist --project-name="$PROJECT_NAME"
+bun install --frozen-lockfile
+bun run build
+bunx wrangler pages deploy dist --project-name="$PROJECT_NAME"

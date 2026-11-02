@@ -18,7 +18,6 @@ toward the cursor.
 
 ```text
 src/
-├── assets/fonts/   Optional licensed webfonts (not committed; see below)
 ├── components/     Nav, social links, fonts, background
 ├── layouts/        Base page layout
 ├── pages/          index.astro (homepage), resume.astro
@@ -28,11 +27,11 @@ src/
 
 ## Getting started
 
-You need Node.js 20 or later.
+You need [Bun](https://bun.sh).
 
 ```sh
-npm ci
-npm run dev
+bun install
+bun run dev
 ```
 
 The development server runs at <http://localhost:4321> and is also available on
@@ -40,18 +39,14 @@ your local network.
 
 | Command           | Action                                  |
 | ----------------- | --------------------------------------- |
-| `npm run dev`     | Start the development server            |
-| `npm run build`   | Build the production site into `dist/`  |
-| `npm run preview` | Preview the production build locally    |
+| `bun run dev`     | Start the development server            |
+| `bun run build`   | Build the production site into `dist/`  |
+| `bun run preview` | Preview the production build locally    |
 
 ## Fonts
 
-The site uses Berkeley Mono and OCR-B. These are commercial fonts, so the font
-files are not in this repository, and `.gitignore` excludes them. Without them,
-the site uses locally installed copies, then system monospace fonts.
-
-To use the fonts, add licensed WOFF2 files to `src/assets/fonts/`. See
-[`src/assets/fonts/README.md`](src/assets/fonts/README.md) for the file names.
+The site is set in [Spectral](https://github.com/productiontype/Spectral) (SIL OFL),
+self-hosted through `@fontsource/spectral`. No third-party font requests.
 
 ## Deployment
 

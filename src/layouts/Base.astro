@@ -28,9 +28,9 @@ const {
     <link rel="icon" href="data:;base64,iVBORw0KGgo=" />
     <title>{title}</title>
   </head>
-  <body class="relative isolate min-h-screen bg-white text-black dark:bg-neutral-900 dark:text-neutral-100 font-mono antialiased">
+  <body class="relative isolate min-h-screen bg-white text-black dark:bg-neutral-900 dark:text-neutral-100 font-serif antialiased">
     {background && <GravityBackground />}
-    <div class="relative z-[1] mx-auto max-w-2xl px-6 py-12 md:py-20">
+    <div class="relative z-[1] max-w-2xl px-6 py-12 md:px-16 md:py-20 lg:px-24">
       <Nav />
       <slot />
     </div>

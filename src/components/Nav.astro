@@ -1,18 +1,14 @@
 ---
 const path = Astro.url.pathname;
 const isResume = path === '/resume' || path === '/resume/';
-
-const showResumeLink = true;
 ---
 
-<nav class="flex justify-end font-accent uppercase tracking-widest">
+<nav class="flex justify-start smallcaps">
   {
     isResume ? (
-      <a href="/" class="text-sm hover:underline underline-offset-4">← Home</a>
-    ) : showResumeLink ? (
-      <a href="/resume" class="text-sm hover:underline underline-offset-4">Resume →</a>
+      <a href="/" class="text-base hover:underline underline-offset-4">← Home</a>
     ) : (
-      <span class="text-sm" aria-hidden="true">&nbsp;</span>
+      <span class="text-base" aria-hidden="true">&nbsp;</span>
     )
   }
 </nav>

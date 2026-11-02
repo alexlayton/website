@@ -1,3 +1,33 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  html {
+    /* Book-like typesetting: old-style figures, kerning, common ligatures. */
+    font-feature-settings: 'kern', 'liga', 'onum';
+    font-kerning: normal;
+    text-rendering: optimizeLegibility;
+  }
+
+  p,
+  li {
+    hyphens: auto;
+    text-wrap: pretty;
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+}
+
+@layer components {
+  /* Real small capitals from Spectral, for headings and navigation. */
+  .smallcaps {
+    font-variant-caps: all-small-caps;
+    font-feature-settings: 'kern', 'liga', 'lnum';
+    letter-spacing: 0.08em;
+  }
+}
